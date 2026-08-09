@@ -1,2 +1,2 @@
-# SMRT
-SMRT - The Shinri Music Replacement Tool
+# SMRT - The Shinri Music Replacement Tool
+
