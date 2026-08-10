@@ -66,12 +66,16 @@ if __name__ == "__main__":
         config = json.load(fconfig)
     if config.get("version",0) != template_config["version"]:
         print("\033[H\033[2JSMRT -- The Shinri Music Replacement Tool")
-        print("Config file out of date! Config may be unfunctional. It is recommended you nuke your config and set-up your overrides from scratch. Proceeding with your existing config is unsupported.")
+        print("Config file out of date! Config may be unfunctional. It is recommended you nuke your config and set-up your overrides from scratch. Proceeding with your existing config is unsupported.\n" \
+        "SMRT will try to merge your config with a default config however this may not be reliable. Use at your own risk!")
+        for k,v in template_config.items():
+            config.setdefault(k,v)
         input("Enter to proceed...")
         print("\033[H\033[2JSMRT -- The Shinri Music Replacement Tool")
     # If GMOD path is unset
     if config["path_to_gmod"] is None or (not Path(config["path_to_gmod"]).exists()):
         print("GMod path has not been configured or is invalid!\nPlease input your GMod path.\nThis is the path you get placed into when you click \"Browse local files\" on Steam.")
+        root.update()
         sgmod_path = filedialog.askdirectory(title="Select GMod Path")
         if not sgmod_path:
             sys.exit("File picker failed.")
@@ -87,6 +91,7 @@ if __name__ == "__main__":
         if config["path_to_workshop"] is None or (not Path(config["path_to_workshop"]).exists()):
             print("\033[H\033[2JSMRT -- The Shinri Music Replacement Tool")
             print("Workshop path has not been configured!\nPlease input your workshop path.\nThis is located at STEAMPATH/steamapps/workshop\nC:\\Program Files (x86)\\Steam\\steamapps\\workshop is the default.(On Windows)")
+            root.update()
             sworkshop_path = filedialog.askdirectory(title="Select Workshop Path")
             if not sworkshop_path:
                 sys.exit("File picker failed.")
@@ -105,9 +110,9 @@ if __name__ == "__main__":
             addon_folder_path = workshop_gmod_content_path / addon_id
             gma_files = list(addon_folder_path.glob("*.gma"))
             if not gma_files:
-                print("No gma files to extract!")
-                input("Enter to exit...")
-                sys.exit("fail")
+                print(f"No gma files to extract in addon {addon_id}! Might be a problem.")
+                input("Enter to continue...")
+                continue
             for addon_file_path in gma_files:
                result = extractGMA(gmad_path,addon_file_path,audio_path)
                if not result:
@@ -117,7 +122,7 @@ if __name__ == "__main__":
                    "Leaving a faulty st_sound directory WILL prevent SMRT from properly functioning.")
                    confirm = input("Confirm>> ")
                    if confirm == "YES":
-                       shutil.rmtree(audio_path)
+                       shutil.rmtree(audio_path,ignore_errors=True)
                    sys.exit("GMAD Failure")
         config["extraction"] = True
         saveConfig(config,config_path)
@@ -142,6 +147,7 @@ if __name__ == "__main__":
             case "1":
                 print("\033[H\033[2JSMRT -- The Shinri Music Replacement Tool")
                 print("You will now be prompted to pick an mp3 file to be overridden. Please pick the file you wish to be replaced")
+                root.update()
                 sreplacing = filedialog.askopenfilename(
                     title="Select the file to be overridden",
                     filetypes=[("mp3 files","*.mp3"),("All Files","*.*")],
@@ -151,7 +157,7 @@ if __name__ == "__main__":
                     continue
                 replacing = Path(sreplacing)
                 try:
-                    replacing_relative = replacing.relative_to(audio_path)
+                    replacing_relative = replacing.resolve().relative_to(audio_path.resolve())
                 except ValueError:
                     print("File must be inside the st_sound directory!")
                     input("Enter to continue...")
@@ -164,6 +170,7 @@ if __name__ == "__main__":
                 print("\033[H\033[2JSMRT -- The Shinri Music Replacement Tool")
                 print("File to be replaced: "+ str(replacing))
                 print("You will now be prompted to pick an mp3 file to override. Please pick the file you wish to be replace the previous one")
+                root.update()
                 soverride = filedialog.askopenfilename(
                     title="Select the file to override",
                     filetypes=[("mp3 files","*.mp3"),("All Files","*.*")],
