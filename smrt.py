@@ -19,18 +19,34 @@ template_config = {
 # removes the root window since i dont need it, i just need tkinter for the file select 
 root = tk.Tk()
 root.withdraw()
+root.attributes("-topmost", True)
 def saveConfig(config:dict,config_path:Path) -> None:
     with open(config_path,"w") as fconfig:
         json.dump(config,fconfig,indent=4)
 
-def extractGMA(gmad_path:Path,gma_path:Path,out_path:Path) -> None:
+def extractGMA(gmad_path:Path,gma_path:Path,out_path:Path) -> bool:
+    if not gmad_path.is_file() or not gma_path.is_file():
+        return False
     command = [
         str(gmad_path), 
         "extract", 
         "-file", str(gma_path), 
         "-out", str(out_path)
     ]
-    subprocess.run(command)
+    result = subprocess.run(command,capture_output=True,text=True)
+    if result.returncode != 0:
+        print("GMAD extraction failed!")
+        print(result.stderr)
+        return False
+    if "Problem" in result.stdout or "Problem" in result.stderr:
+        print("GMAD experienced a problem.")
+        print(result.stdout)
+        print(result.stderr)
+        return False
+    if not any(out_path.iterdir()):
+        print("It appears output directory is empty.")
+        return False
+    return True
 
 
 if __name__ == "__main__":
@@ -48,7 +64,7 @@ if __name__ == "__main__":
     # Load the config
     with open(config_path,"r") as fconfig:
         config = json.load(fconfig)
-    if config["version"] != template_config["version"]:
+    if config.get("version",0) != template_config["version"]:
         print("\033[H\033[2JSMRT -- The Shinri Music Replacement Tool")
         print("Config file out of date! Config may be unfunctional. It is recommended you nuke your config and set-up your overrides from scratch. Proceeding with your existing config is unsupported.")
         input("Enter to proceed...")
@@ -89,7 +105,10 @@ if __name__ == "__main__":
             addon_folder_path = workshop_gmod_content_path / addon_id
             gma_files = addon_folder_path.glob("*.gma")
             for addon_file_path in gma_files:
-               extractGMA(gmad_path,addon_file_path,audio_path)
+               result = extractGMA(gmad_path,addon_file_path,audio_path)
+               if not result:
+                   input("Press enter to exit...")
+                   sys.exit("GMAD Failure")
         print("\033[H\033[2JSMRT -- The Shinri Music Replacement Tool")
         print("File extraction complete.")
 

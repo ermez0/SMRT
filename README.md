@@ -10,7 +10,7 @@ When starting up SMRT for the first time, it will generate a config file. Then i
 
 After that, SMRT will prompt you for your "workshop path". This folder is specifically located in the "steamapps" folder 2 directories above the GMod folder in most cases. Note that it does **not** want the GMod workshop folder, just the general workshop folder. By default it is ```C:\Program Files (x86)\Steam\steamapps\workshop```.
 
-After getting the folder directories, you may see a bunch of text coming out of the command output. That is gmad.exe unpacking the music files bundled into the game. You will know that process is done when it shows you the SMRT menu.
+After getting the folder directories, SMRT will extract the GMA files. You will know that process is done when it shows you the SMRT menu.
 
 Option 1 will allow you to pick 2 ```.mp3``` files. The first file you pick will be the one that plays in game that you want to get rid of and the second file will be the one that replaces it. While you can *technically* choose a file outside of the ones that come with Shinri Trial, doing so is **unsupported** as there has been no testing on if GMod plays nice with them. You can certainly try *at your own risk*.
 
