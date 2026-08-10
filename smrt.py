@@ -43,7 +43,7 @@ def extractGMA(gmad_path:Path,gma_path:Path,out_path:Path) -> bool:
         print(result.stdout)
         print(result.stderr)
         return False
-    if not any(out_path.iterdir()):
+    if not out_path.exists() or not any(out_path.iterdir()):
         print("It appears output directory is empty.")
         return False
     return True
