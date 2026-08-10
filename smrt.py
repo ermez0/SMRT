@@ -137,7 +137,12 @@ if __name__ == "__main__":
                 if not sreplacing:
                     continue
                 replacing = Path(sreplacing)
-                replacing_relative = replacing.relative_to(audio_path)
+                try:
+                    replacing_relative = replacing.relative_to(audio_path)
+                except:
+                    print("File must be inside the st_sound directory!")
+                    input("Enter to continue...")
+                    continue
                 if str(replacing_relative) in config["active_overrides"]:
                     print("\033[H\033[2JSMRT -- The Shinri Music Replacement Tool")
                     print("That file is already overridden. Remove it first. Press Enter to proceed.")
