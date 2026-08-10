@@ -104,6 +104,10 @@ if __name__ == "__main__":
         for addon_id in addons_to_extract:
             addon_folder_path = workshop_gmod_content_path / addon_id
             gma_files = addon_folder_path.glob("*.gma")
+            if not gma_files:
+                print("No gma files to extract!")
+                input("Enter to exit...")
+                sys.exit("fail")
             for addon_file_path in gma_files:
                result = extractGMA(gmad_path,addon_file_path,audio_path)
                if not result:
