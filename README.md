@@ -16,7 +16,7 @@ Option 1 will allow you to pick 2 ```.mp3``` files. The first file you pick will
 
 Option 2 will allow you to see all overrides that are currently listed in the ```config.json``` file. Note that this does **not** check what overrides are actually active, just which overrides are listed in the config. If your config becomes out of sync with the actual overrides, you may try option 3. When listing all these overrides, they will all get an ID. By inputting an ID number into SMRT, you can remove that override.
 
-Option 3 will reset the config to a basic one and also remove the SMRT addon from GMod, essentially doing a soft-uninstall of the program. You may want to do this when you are trying to remove SMRT from your device or your config file is invalid or otherwise bad and you want a fresh start.
+Option 3 will reset the config to a basic one and also remove the SMRT addon from GMod, it will also remove st_sound. essentially doing a soft-uninstall of the program. You may want to do this when you are trying to remove SMRT from your device or your config file is invalid and you want a fresh start.
 
 ## Known Problems
 ### If you have any issues not listed here, please open an issue on the GitHub page.
