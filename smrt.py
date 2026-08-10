@@ -5,15 +5,15 @@ I know this code is terrible, I don't expect anyone but me to work on it -ermez
 import sys
 import shutil
 import json
-import os
 import subprocess
 import tkinter as tk
 from tkinter import filedialog
 from pathlib import Path
 template_config = {
-    "version":0.2,
+    "version":0.3,
     "path_to_gmod": None,
     "path_to_workshop":None,
+    "extraction":False,
     "active_overrides" : {} # format will be "active_overrides" : {"something(replacing)":"another thing(the replacement)"}
 }
 # removes the root window since i dont need it, i just need tkinter for the file select 
@@ -82,7 +82,7 @@ if __name__ == "__main__":
     saveConfig(config,config_path)
     audio_path = scr_root / "st_sound"
     # Check if audio extraction has already been done
-    if not audio_path.is_dir():
+    if not audio_path.is_dir() or not config.get("extraction",False):
         # Do the workshop path thing
         if config["path_to_workshop"] is None or (not Path(config["path_to_workshop"]).exists()):
             print("\033[H\033[2JSMRT -- The Shinri Music Replacement Tool")
@@ -103,7 +103,7 @@ if __name__ == "__main__":
             gmad_path = gmod_path / "bin" / "gmad"
         for addon_id in addons_to_extract:
             addon_folder_path = workshop_gmod_content_path / addon_id
-            gma_files = addon_folder_path.glob("*.gma")
+            gma_files = list(addon_folder_path.glob("*.gma"))
             if not gma_files:
                 print("No gma files to extract!")
                 input("Enter to exit...")
@@ -112,11 +112,16 @@ if __name__ == "__main__":
                result = extractGMA(gmad_path,addon_file_path,audio_path)
                if not result:
                    print("Because extraction failed, it is *heavily* recommeneded you remove the st_sound directory.")
-                   print(str(audio_path) + " will be removed PERMANENTLY. If this path is valid, input \"YES\". If the path is invalid, type \"NO\" or close out of the program")
+                   print(str(audio_path) + " will be removed PERMANENTLY. If this path is valid, input \"YES\". If the path is invalid, type \"NO\" or close out of the program.\n"
+                   "If you do not authorize the deletion, please delete the directory yourself.\n"
+                   "Leaving a faulty st_sound directory WILL prevent SMRT from properly functioning.")
                    confirm = input("Confirm>> ")
                    if confirm == "YES":
                        shutil.rmtree(audio_path)
                    sys.exit("GMAD Failure")
+        config["extraction"] = True
+        saveConfig(config,config_path)
+        
         print("\033[H\033[2JSMRT -- The Shinri Music Replacement Tool")
         print("File extraction complete.")
 
@@ -147,7 +152,7 @@ if __name__ == "__main__":
                 replacing = Path(sreplacing)
                 try:
                     replacing_relative = replacing.relative_to(audio_path)
-                except:
+                except ValueError:
                     print("File must be inside the st_sound directory!")
                     input("Enter to continue...")
                     continue
