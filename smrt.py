@@ -1,9 +1,6 @@
 """
-What needs to happen
-1: Check for config file
-2: Locate GMOD
-3: Use GMAD to extract all audio .gma files
-4: the actual replacement stuff
+SMRT -- The Shinri Music Replacement Tool
+I know this code is terrible, I don't expect anyone but me to work on it -ermez
 """
 import sys
 import shutil
@@ -14,6 +11,7 @@ import tkinter as tk
 from tkinter import filedialog
 from pathlib import Path
 template_config = {
+    "version":0.2,
     "path_to_gmod": None,
     "path_to_workshop":None,
     "active_overrides" : {} # format will be "active_overrides" : {"something(replacing)":"another thing(the replacement)"}
@@ -50,9 +48,14 @@ if __name__ == "__main__":
     # Load the config
     with open(config_path,"r") as fconfig:
         config = json.load(fconfig)
+    if config["version"] != template_config["version"]:
+        print("\033[H\033[2JSMRT -- The Shinri Music Replacement Tool")
+        print("Config file out of date! Config may be unfunctional. It is recommended you nuke your config and set-up your overrides from scratch. Proceeding with your existing config is unsupported.")
+        input("Enter to proceed...")
+        print("\033[H\033[2JSMRT -- The Shinri Music Replacement Tool")
     # If GMOD path is unset
-    if config["path_to_gmod"] is None:
-        print("GMod path has not been configured!\nPlease input your GMod path.\nThis is the path you get placed into when you click \"Browse local files\" on Steam.")
+    if config["path_to_gmod"] is None or (not Path(config["path_to_gmod"]).exists()):
+        print("GMod path has not been configured or is invalid!\nPlease input your GMod path.\nThis is the path you get placed into when you click \"Browse local files\" on Steam.")
         sgmod_path = filedialog.askdirectory(title="Select GMod Path")
         if not sgmod_path:
             sys.exit("File picker failed.")
@@ -65,7 +68,7 @@ if __name__ == "__main__":
     # Check if audio extraction has already been done
     if not audio_path.is_dir():
         # Do the workshop path thing
-        if config["path_to_workshop"] is None:
+        if config["path_to_workshop"] is None or (not Path(config["path_to_workshop"]).exists()):
             print("\033[H\033[2JSMRT -- The Shinri Music Replacement Tool")
             print("Workshop path has not been configured!\nPlease input your workshop path.\nThis is located at STEAMPATH/steamapps/workshop\nC:\\Program Files (x86)\\Steam\\steamapps\\workshop is the default.(On Windows)")
             sworkshop_path = filedialog.askdirectory(title="Select Workshop Path")
@@ -78,10 +81,15 @@ if __name__ == "__main__":
         saveConfig(config,config_path)
         workshop_gmod_content_path = workshop_path / "content" / "4000"
         addons_to_extract = ["3600114514","2560009684","2560012664","3600116031"]
-        gmad_path = gmod_path / "bin" / "gmad.exe"
+        if sys.platform == "win32":
+            gmad_path = gmod_path / "bin" / "gmad.exe"
+        else:
+            gmad_path = gmod_path / "bin" / "gmad"
         for addon_id in addons_to_extract:
-            addon_file_path = workshop_gmod_content_path / addon_id / "gmpublisher.gma"
-            extractGMA(gmad_path,addon_file_path,audio_path)
+            addon_folder_path = workshop_gmod_content_path / addon_id
+            gma_files = addon_folder_path.glob("*.gma")
+            for addon_file_path in gma_files:
+               extractGMA(gmad_path,addon_file_path,audio_path)
         print("\033[H\033[2JSMRT -- The Shinri Music Replacement Tool")
         print("File extraction complete.")
 
@@ -134,8 +142,7 @@ if __name__ == "__main__":
                 dest_file = gmod_path / "garrysmod" / "addons" / "smrt" / relative_path
                 dest.mkdir(parents=True,exist_ok=True)
                 shutil.copy2(override,dest_file)
-                override_relative = override.relative_to(audio_path)
-                config["active_overrides"][str(replacing_relative)] = str(override_relative)
+                config["active_overrides"][str(replacing_relative)] = str(override)
                 saveConfig(config,config_path)
             case "2":
                 print("\033[H\033[2JSMRT -- The Shinri Music Replacement Tool")
