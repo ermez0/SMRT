@@ -181,7 +181,7 @@ if __name__ == "__main__":
                 override = Path(soverride)
                 # the copy operation now
                 # the path beginning with /sound...
-                relative_path = replacing.relative_to(audio_path)
+                relative_path = replacing.resolve().relative_to(audio_path.resolve())
                 dest = gmod_path / "garrysmod" / "addons" / "smrt" / relative_path.parent
                 dest_file = gmod_path / "garrysmod" / "addons" / "smrt" / relative_path
                 dest.mkdir(parents=True,exist_ok=True)
