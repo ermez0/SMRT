@@ -111,7 +111,11 @@ if __name__ == "__main__":
             for addon_file_path in gma_files:
                result = extractGMA(gmad_path,addon_file_path,audio_path)
                if not result:
-                   input("Press enter to exit...")
+                   print("Because extraction failed, it is *heavily* recommeneded you remove the st_sound directory.")
+                   print(str(audio_path) + " will be removed PERMANENTLY. If this path is valid, input \"YES\". If the path is invalid, type \"NO\" or close out of the program")
+                   confirm = input("Confirm>> ")
+                   if confirm == "YES":
+                       shutil.rmtree(audio_path)
                    sys.exit("GMAD Failure")
         print("\033[H\033[2JSMRT -- The Shinri Music Replacement Tool")
         print("File extraction complete.")
