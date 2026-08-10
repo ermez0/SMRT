@@ -23,6 +23,10 @@ Option 3 will reset the config to a basic one and also remove the SMRT addon fro
 - It is known that the program will mess up if the user chooses a wrong directory for their Garry's Mod or Workshop directory. I am planning to introduce a way to check if the directory is correct before allowing the program to proceed
 - There might be some places without input validation which may cause the program to crash.
 
+## FAQ(Not really I'm just answering questions I thought *might* get asked)
+- Why is this not a workshop addon?
+  Because this tool allows customizability that you just can't get from one addon. Also I don't know how steam works well enough to make an addon
+
 ## Credits
 - The Shinri Trial developers for making this possible
 - I have used the assistance of Gemini 3.6 Flash in the development of SMRT. Please know that I did not "vibe code" this, I am just inexperienced with Python and programming in general and I needed help on file manipulation.
