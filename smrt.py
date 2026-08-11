@@ -60,9 +60,11 @@ def extractGMA(gmad_path:Path,gma_path:Path,out_path:Path) -> bool:
     #if none of the above are true, the extract succeeded
     return True
 
+def clearTerminal() -> None:
+    print("\033[H\033[2JSMRT -- The Shinri Music Replacement Tool")
 
 if __name__ == "__main__":
-    print("\033[H\033[2JSMRT -- The Shinri Music Replacement Tool") # you will see me write this a lot, to clear the terminal
+    clearTerminal() # you will see me write this a lot, to clear the terminal
     # Figure out the root of the script based on if its running as a script/as an executable
     if getattr(sys, "frozen", False):
         scr_root = Path(sys.executable).parent
@@ -78,13 +80,13 @@ if __name__ == "__main__":
         config = json.load(fconfig)
     # if config version is wrong, warn and fill in empty values
     if config.get("version",0) != template_config["version"]:
-        print("\033[H\033[2JSMRT -- The Shinri Music Replacement Tool")
+        clearTerminal()
         print("Config file out of date! Config may be unfunctional. It is recommended you nuke your config and set-up your overrides from scratch. Proceeding with your existing config is unsupported.\n" \
         "SMRT will try to merge your config with a default config however this may not be reliable. Use at your own risk!")
         for k,v in template_config.items():
             config.setdefault(k,v)
         input("Enter to proceed...")
-        print("\033[H\033[2JSMRT -- The Shinri Music Replacement Tool")
+        clearTerminal()
     # If GMOD path is unset
     if config["path_to_gmod"] is None or (not Path(config["path_to_gmod"]).exists()):
         print("GMod path has not been configured or is invalid!\nPlease input your GMod path.\nThis is the path you get placed into when you click \"Browse local files\" on Steam.")
@@ -102,7 +104,7 @@ if __name__ == "__main__":
     if not audio_path.is_dir() or not config.get("extraction",False):
         # If the workshop path is not set
         if config["path_to_workshop"] is None or (not Path(config["path_to_workshop"]).exists()):
-            print("\033[H\033[2JSMRT -- The Shinri Music Replacement Tool")
+            clearTerminal()
             print("Workshop path has not been configured!\nPlease input your workshop path.\nThis is located at STEAMPATH/steamapps/workshop\nC:\\Program Files (x86)\\Steam\\steamapps\\workshop is the default.(On Windows)")
             root.update()
             sworkshop_path = filedialog.askdirectory(title="Select Workshop Path")
@@ -145,12 +147,12 @@ if __name__ == "__main__":
         config["extraction"] = True # mark the extraction as complete
         saveConfig(config,config_path)
         
-        print("\033[H\033[2JSMRT -- The Shinri Music Replacement Tool")
+        clearTerminal()
         print("File extraction complete.")
 
     # The actual music replacement part
     while True:
-        print("\033[H\033[2JSMRT -- The Shinri Music Replacement Tool")
+        clearTerminal()
         print("Pick an option:\n" \
         "1) Add override\n" \
         "2) Manage existing overrides\n" \
@@ -163,7 +165,7 @@ if __name__ == "__main__":
             case "q": #exit
                 break
             case "1":
-                print("\033[H\033[2JSMRT -- The Shinri Music Replacement Tool")
+                clearTerminal()
                 print("You will now be prompted to pick an mp3 file to be overridden. Please pick the file you wish to be replaced")
                 root.update()
                 sreplacing = filedialog.askopenfilename(
@@ -181,11 +183,11 @@ if __name__ == "__main__":
                     input("Enter to continue...") #if the file isnt in st_sound, it cant be replaced
                     continue
                 if str(replacing_relative) in config["active_overrides"]: #if file is already overridden you cant do it
-                    print("\033[H\033[2JSMRT -- The Shinri Music Replacement Tool")
+                    clearTerminal()
                     print("That file is already overridden. Remove it first. Press Enter to proceed.")
                     input()
                     continue 
-                print("\033[H\033[2JSMRT -- The Shinri Music Replacement Tool")
+                clearTerminal()
                 print("File to be replaced: "+ str(replacing))
                 print("You will now be prompted to pick an mp3 file to override. Please pick the file you wish to be replace the previous one")
                 root.update()
@@ -210,7 +212,7 @@ if __name__ == "__main__":
                 config["active_overrides"][str(replacing_relative)] = str(override)
                 saveConfig(config,config_path)
             case "2":
-                print("\033[H\033[2JSMRT -- The Shinri Music Replacement Tool")
+                clearTerminal()
                 overrides_list = []
                 for i,replacing in enumerate(config["active_overrides"]):
                     print("ID: " + str(i) + " | " + str(replacing) + " is being overridden by "+ config["active_overrides"][str(replacing)])
@@ -228,7 +230,7 @@ if __name__ == "__main__":
                 del config["active_overrides"][replacing_to_remove]
                 saveConfig(config,config_path)
             case "3":
-                print("\033[H\033[2JSMRT -- The Shinri Music Replacement Tool")
+                clearTerminal()
                 smrt_addon_folder = gmod_path / "garrysmod" / "addons" / "smrt"
                 print("NOTE: THIS WILL WIPE + \"" + str(smrt_addon_folder) + "\" and \"" + str(audio_path) +"\".\n"
                 "If any of those directories should not be wiped, do NOT authorize the deletion! ")
