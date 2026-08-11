@@ -3,6 +3,8 @@ SMRT -- The Shinri Music Replacement Tool
 I know this code is terrible, I don't expect anyone but me to work on it -ermez
 """
 # Imports
+steam_root = None
+import vdf
 import sys
 import shutil
 import json
@@ -25,7 +27,7 @@ root.attributes("-topmost", True)
 
 # Saves the JSON provided as config to config_path
 def saveConfig(config:dict,config_path:Path) -> None:
-    with open(config_path,"w") as fconfig:
+    with open(config_path,"w",encoding="utf-8") as fconfig:
         json.dump(config,fconfig,indent=4)
 
 # Extracts the .gma file at gma_path using gmad.exe found at gmad_path and saves the output at out_path
@@ -65,6 +67,18 @@ def clearTerminal() -> None:
 
 if __name__ == "__main__":
     clearTerminal() # you will see me write this a lot, to clear the terminal
+    if sys.platform.startswith("win32"):
+        platform = "win32"
+    elif sys.platform.startswith("darwin"):
+        platform = "macos"
+    elif sys.platform.startswith("linux"):
+        platform = "linux" 
+    else:
+        platform = "undefined"
+        print("Could not identify operating system! Input \"BYPASS\" to bypass this check. Proceeding from here on out is unsupported.(Much like everything in this program)")
+        choice = input("Input>>")
+        if choice.strip().upper() != "BYPASS":
+            sys.exit("OS not recognized.")
     # Figure out the root of the script based on if its running as a script/as an executable
     if getattr(sys, "frozen", False):
         scr_root = Path(sys.executable).parent
@@ -73,10 +87,10 @@ if __name__ == "__main__":
     config_path = scr_root / "config.json"
     # Make the config if it doesnt exist
     if not config_path.is_file():
-        with open(config_path,"w") as fconfig:
+        with open(config_path,"w",encoding="utf-8") as fconfig:
             json.dump(template_config, fconfig, indent=4)
     # Load the config
-    with open(config_path,"r") as fconfig:
+    with open(config_path,"r",encoding="utf-8") as fconfig:
         config = json.load(fconfig)
     # if config version is wrong, warn and fill in empty values
     if config.get("version",0) != template_config["version"]:
@@ -88,29 +102,107 @@ if __name__ == "__main__":
         input("Enter to proceed...")
         clearTerminal()
     # If GMOD path is unset
-    if config["path_to_gmod"] is None or (not Path(config["path_to_gmod"]).exists()):
-        print("GMod path has not been configured or is invalid!\nPlease input your GMod path.\nThis is the path you get placed into when you click \"Browse local files\" on Steam.")
-        root.update()
-        sgmod_path = filedialog.askdirectory(title="Select GMod Path")
-        if not sgmod_path:
-            sys.exit("File picker failed.")
-        gmod_path = Path(sgmod_path)
+    if config["path_to_gmod"] is None or (not Path(config["path_to_gmod"]).exists()) or (not (Path(config["path_to_gmod"]) / "garrysmod").exists()): 
+        gmod_detect = False
+        print("SMRT will attempt to auto-configure the GMOD path. If this is incorrect, you will be allowed to choose a custom path.")
+        exit_flag = False
+        steam_root = None
+        gmod_path = None
+        if platform == "win32":
+            import winreg
+            try:
+                steam_install_key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\WOW6432NODE\Valve\Steam")
+                steam_root_s, _ = winreg.QueryValueEx(steam_install_key, "InstallPath")
+                steam_root = Path(steam_root_s)
+            except:
+                steam_root = Path(r"C:\Program Files (x86)\Steam")
+        elif platform == "macos":
+            steam_root = Path.home() / "Library" /"Application Support" /"Steam"
+        elif platform == "linux":
+            # i dont use linux so i will pull a bunch of random directories from the internet and hope one sticks
+            possible_steams = [Path.home() / ".local" / "share" / "Steam",
+                               Path.home() /".var"/"app"/"com.valvesoftware.Steam"/".local"/"share"/"Steam",
+                               Path.home() /".var"/"app"/"com.valvesoftware.Steam"/"data"/"Steam",
+                               Path.home() / "snap/steam/common/.local/share/Steam",
+                               Path.home() / ".steam" / "steam",
+                               Path.home() / ".steam" / "root"]
+            for possible_steam in possible_steams:
+                if possible_steam.is_dir() and (possible_steam / "steamapps").is_dir():
+                    steam_root = possible_steam
+                    break
+            
+        if not steam_root or not steam_root.is_dir():
+            print("Failure to locate Steam! Reverting to manual folder select.")
+            exit_flag = True
+        if not exit_flag:
+            assert steam_root is not None
+            gmod_path = steam_root / "steamapps" / "common" / "GarrysMod"
+            if not gmod_path.is_dir():
+                # i need to parse a vdf here i have no clue how you do that, update: i figured it out
+                libraryfolders = steam_root / "steamapps" / "libraryfolders.vdf"
+                if not libraryfolders.is_file():
+                    print("Failure to locate libraryfolders.vdf! Reverting to manual folder select.")
+                    exit_flag = True
+                if not exit_flag:
+                    with open(libraryfolders, "r",encoding="utf-8") as f:
+                        libraryfolders_data = vdf.parse(f)
+                        for key, value in libraryfolders_data["libraryfolders"].items():
+                            if isinstance(value,dict) and "path" in value:
+                                gmod_path = Path(value["path"]) / "steamapps" / "common" / "GarrysMod"
+                                if gmod_path.is_dir():
+                                    gmod_detect = True
+                                    library_path = Path(value["path"])
+                                    break
+            else:
+                gmod_detect = True
+                library_path = steam_root
+            if gmod_detect:
+                print("GMod located at " + str(gmod_path) + ". if this is incorrect, type MANUAL, otherwise hit Enter.")
+                choice = input("Input>>")
+                if choice.strip().upper() == "MANUAL":
+                    gmod_detect = False
+        if not gmod_detect:
+            print("GMod path has not been configured or is invalid!\nPlease input your GMod path.\nThis is the path you get placed into when you click \"Browse local files\" on Steam.")
+            root.update()
+            sgmod_path = filedialog.askdirectory(title="Select GMod Path")
+            if not sgmod_path:
+                sys.exit("File picker failed.")
+            gmod_path = Path(sgmod_path)
     else:
+        steam_root = None
         gmod_path = Path(config["path_to_gmod"])
     config["path_to_gmod"] = str(gmod_path)
     saveConfig(config,config_path)
+    assert gmod_path is not None
     audio_path = scr_root / "st_sound"
     # Check if audio extraction has already been done
+    workshop_path = None
+    workshop_fail = False
     if not audio_path.is_dir() or not config.get("extraction",False):
         # If the workshop path is not set
         if config["path_to_workshop"] is None or (not Path(config["path_to_workshop"]).exists()):
             clearTerminal()
-            print("Workshop path has not been configured!\nPlease input your workshop path.\nThis is located at STEAMPATH/steamapps/workshop\nC:\\Program Files (x86)\\Steam\\steamapps\\workshop is the default.(On Windows)")
-            root.update()
-            sworkshop_path = filedialog.askdirectory(title="Select Workshop Path")
-            if not sworkshop_path:
-                sys.exit("File picker failed.")
-            workshop_path = Path(sworkshop_path)
+            print("SMRT will attempt to auto-configure the Workshop path. If this is incorrect, you will be allowed to choose a custom path.")
+            workshop_path = gmod_path.parent.parent / "workshop"
+            if not (workshop_path / "content" /"4000").is_dir():
+                print("Auto detect failure, reverting to manual pick.")
+                workshop_fail = True
+            if not workshop_fail:
+                print("Workshop located at " + str(workshop_path) + ". if this is incorrect, type MANUAL, otherwise hit Enter.")
+                choice = input("Input>>")
+                if choice.strip().upper() == "MANUAL":
+                    workshop_fail = True
+            if workshop_fail:
+                print("Workshop path has not been configured!\nPlease input your workshop path.\nThis is located at STEAMPATH/steamapps/workshop\nC:\\Program Files (x86)\\Steam\\steamapps\\workshop is the default.(On Windows)")
+                root.update()
+                sworkshop_path = filedialog.askdirectory(title="Select Workshop Path")
+                if not sworkshop_path:
+                    sys.exit("File picker failed.")
+                workshop_path = Path(sworkshop_path)
+                if workshop_path.name == "4000" and workshop_path.parent.name == "content": #they chose wrong
+                    workshop_path = workshop_path.parent.parent
+                elif workshop_path.name == "content":
+                    workshop_path = workshop_path.parent
         else:
             workshop_path = Path(config["path_to_workshop"])
         config["path_to_workshop"] = str(workshop_path)
@@ -119,10 +211,23 @@ if __name__ == "__main__":
         workshop_gmod_content_path = workshop_path / "content" / "4000"
         addons_to_extract = ["3600114514","2560009684","2560012664","3600116031"] # These are the IDs of BGM Base, 1, 2 and 3 by Mikvoin on the steam workshop
         # get gmad
-        if sys.platform == "win32":
-            gmad_path = gmod_path / "bin" / "gmad.exe"
-        else:
-            gmad_path = gmod_path / "bin" / "gmad"
+        gmad_path = None
+        gmad_paths = [gmod_path / "bin" / "gmad",
+                        gmod_path / "bin" / "linux64" / "gmad",
+                        gmod_path / "bin" / "gmad_osx",
+                        gmod_path / "bin" / "gmad_linux",
+                        gmod_path / "bin" / "gmad.exe",
+                        gmod_path / "bin" / "win64" / "gmad.exe",
+                        gmod_path / "bin" / "osx64" / "gmad"]
+        for maybe_gmad in gmad_paths:
+            if maybe_gmad.is_file():
+                gmad_path = maybe_gmad
+                break
+        if not gmad_path:
+            print("GMad not found! Exiting...")
+            input("Enter to exit...")
+            sys.exit(1)
+            
         # For every addon in the addons to extract
         for addon_id in addons_to_extract:
             addon_folder_path = workshop_gmod_content_path / addon_id
@@ -146,13 +251,19 @@ if __name__ == "__main__":
                    sys.exit("GMAD Failure")
         config["extraction"] = True # mark the extraction as complete
         saveConfig(config,config_path)
-        
         clearTerminal()
         print("File extraction complete.")
+
+
 
     # The actual music replacement part
     while True:
         clearTerminal()
+        print("Below, GMod root should be set. Steam Root and Workshop Root may not be set depending on if they were needed during launch.\n"
+              "Please ensure GMod root is correct before proceeding.")
+        print("Steam Root: "+ str(steam_root)+ "\n"+
+              "GMod Root: "+ str(gmod_path)+ "\n"+
+              "Workshop Root: " + str(workshop_path))
         print("Pick an option:\n" \
         "1) Add override\n" \
         "2) Manage existing overrides\n" \
@@ -218,9 +329,9 @@ if __name__ == "__main__":
                     print("ID: " + str(i) + " | " + str(replacing) + " is being overridden by "+ config["active_overrides"][str(replacing)])
                     overrides_list.append(str(replacing))
                 choicer = input("ID to remove, q to go back>>")
-                if choicer.lower() == "q":
+                if choicer.strip().lower() == "q":
                     continue                
-                if not choicer.isnumeric():
+                if not choicer.strip().isnumeric():
                     continue
                 if int(choicer) < 0 or int(choicer) >= len(overrides_list):
                     continue

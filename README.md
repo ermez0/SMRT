@@ -6,9 +6,9 @@
 SMRT extracts the music files already shipped with Shinri Trial by using a tool built into Garry's Mod called gmad.exe. After the extraction, SMRT will allow the user to pick a file to be replaced and a file to replace with. It also allows the user to list and remove the overrides as they see fit. The replacement works by making a folder in ```.../garrysmod/addons``` nanmed "smrt", and putting the files in there. From my experimentation, the music there overrides the music that Shinri Trial comes with.
 
 ## How to Use
-When starting up SMRT for the first time, it will generate a config file. Then it will ask you for your GMod path. This is the path that you get when clicking "Browse Local Files" on GMod in Steam. By default it is ```C:\Program Files (x86)\Steam\steamapps\common\GarrysMod```.
+When starting up SMRT for the first time, it will generate a config file. Then it will attempt to auto-detect your GMod folder. If it fails, it ask you for your GMod path. This is the path that you get when clicking "Browse Local Files" on GMod in Steam. By default it is ```C:\Program Files (x86)\Steam\steamapps\common\GarrysMod```.
 
-After that, SMRT will prompt you for your "workshop path". This folder is specifically located in the "steamapps" folder 2 directories above the GMod folder in most cases. Note that it does **not** want the GMod workshop folder, just the general workshop folder. By default it is ```C:\Program Files (x86)\Steam\steamapps\workshop```.
+After that, SMRT will attempt to auto-detect the workshop folder. If it fails, it will prompt you for your "workshop path". This folder is specifically located in the "steamapps" folder 2 directories above the GMod folder in most cases. Note that it does **not** want the GMod workshop folder, just the general workshop folder. By default it is ```C:\Program Files (x86)\Steam\steamapps\workshop```.
 
 After getting the folder directories, SMRT will extract the GMA files. You will know that process is done when it shows you the SMRT menu.
 
