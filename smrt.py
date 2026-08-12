@@ -347,7 +347,7 @@ if __name__ == "__main__":
                     input()
                     continue 
                 clearTerminal()
-                print("File to be replaced: "+ str(replacing))
+                print("File to be replaced: "+ str(replacing_relative))
                 print("You will now be prompted to pick an mp3 file to override. Please pick the file you wish to be replace the previous one")
                 override = filePicker("Select the file to override",[("mp3 files","*.mp3"),("All Files","*.*")],audio_path/"sound"/"dro"/"bgm")
                 if not override:
