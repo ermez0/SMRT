@@ -3,7 +3,7 @@ SMRT -- The Shinri Music Replacement Tool
 I know this code is terrible, I don't expect anyone but me to work on it -ermez
 """
 # Imports
-import vdf
+import vdf # pyright: ignore[reportMissingTypeStubs]
 import sys
 import shutil
 import json
@@ -11,8 +11,9 @@ import subprocess
 import tkinter as tk
 from tkinter import filedialog
 from pathlib import Path
+from typing import Any,cast
 # Default config
-template_config = {
+template_config: dict[Any,Any] = {
     "version":0.3,
     "path_to_gmod": None,
     "path_to_workshop":None,
@@ -21,7 +22,7 @@ template_config = {
 }
 
 # Saves the JSON provided as config to config_path
-def saveConfig(config:dict,config_path:Path) -> None:
+def saveConfig(config:dict[Any,Any],config_path:Path) -> None:
     with open(config_path,"w",encoding="utf-8") as fconfig:
         json.dump(config,fconfig,indent=4)
 
@@ -68,18 +69,18 @@ def clearTerminal() -> None:
 def folderPicker(windowTitle: str) -> Path | None:
     root = tk.Tk()
     root.withdraw()
-    root.attributes("-topmost", True)
+    root.attributes("-topmost", True) # type: ignore
     folder = filedialog.askdirectory(title=windowTitle)
     root.destroy()
     return Path(folder) if folder else None
 
-def filePicker(windowTitle: str, fileTypes: list, initialDir: Path | None = None) -> Path | None:
+def filePicker(windowTitle: str, fileTypes: list, initialDir: Path | None = None) -> Path | None: # type: ignore
     root = tk.Tk()
     root.withdraw()
-    root.attributes("-topmost", True)
+    root.attributes("-topmost", True) # type: ignore
     file = filedialog.askopenfilename(
                         title=windowTitle,
-                        filetypes=fileTypes,
+                        filetypes=fileTypes, # type: ignore
                         initialdir=initialDir)
     root.destroy()
     return Path(file) if file else None
@@ -91,7 +92,7 @@ def getScriptRoot() -> Path:
         scr_root = Path(__file__).resolve().parent
     return scr_root
 
-def processConfig(config_path: Path) -> dict:
+def processConfig(config_path: Path) -> dict[Any,Any]:
     if not config_path.is_file():
         with open(config_path,"w",encoding="utf-8") as fconfig:
             json.dump(template_config, fconfig, indent=4)
@@ -117,9 +118,10 @@ def detectGMod(steam_root: Path) -> Path | None:
             print("Failure to locate libraryfolders.vdf! Reverting to manual folder select.")
             return None
         with open(libraryfolders, "r",encoding="utf-8") as f:
-            libraryfolders_data = vdf.parse(f)
+            libraryfolders_data: dict[Any,Any] = cast(dict[Any,Any],vdf.parse(f))  # pyright: ignore[reportUnknownMemberType]
             for value in libraryfolders_data["libraryfolders"].values():
                 if isinstance(value,dict) and "path" in value:
+                    assert isinstance(value["path"],str)
                     gmod_path = Path(value["path"]) / "steamapps" / "common" / "GarrysMod"
                     if gmod_path.is_dir():
                         break
@@ -173,7 +175,7 @@ def detectWorkshop(gmod_path: Path) -> Path | None:
         return None
     return workshop_path
 
-def extractAddons(workshop_path:Path,gmod_path:Path,config:dict,audio_path:Path,config_path:Path) -> None:
+def extractAddons(workshop_path:Path,gmod_path:Path,config:dict[Any,Any],audio_path:Path,config_path:Path) -> None:
     workshop_gmod_content_path = workshop_path / "content" / "4000"
     addons_to_extract = ["3600114514","2560009684","2560012664","3600116031"] # These are the IDs of BGM Base, 1, 2 and 3 by Mikvoin on the steam workshop
     # get gmad
@@ -221,7 +223,7 @@ def findGmad(gmod_path: Path) -> Path | None:
             return gmad_path
     return None
 
-def addOverride(replacing:Path,override:Path, gmod_path:Path,config:dict,config_path:Path,audio_path:Path):
+def addOverride(replacing:Path,override:Path, gmod_path:Path,config:dict[Any,Any],config_path:Path,audio_path:Path):
     relative_path = replacing.resolve().relative_to(audio_path.resolve())
     dest = gmod_path / "garrysmod" / "addons" / "smrt" / relative_path.parent
     dest_file = gmod_path / "garrysmod" / "addons" / "smrt" / relative_path
@@ -230,8 +232,8 @@ def addOverride(replacing:Path,override:Path, gmod_path:Path,config:dict,config_
     config["active_overrides"][str(relative_path)] = str(override)
     saveConfig(config,config_path)
 
-def listOverrides(config:dict) -> list:
-    overrides_list = []
+def listOverrides(config:dict[Any,Any]) -> list[str]:
+    overrides_list: list[str] = []
     for i,replacing in enumerate(config["active_overrides"]):
         print("ID: " + str(i) + " | " + str(replacing) + " is being overridden by "+ config["active_overrides"][str(replacing)])
         overrides_list.append(str(replacing))
