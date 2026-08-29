@@ -3,6 +3,8 @@ SMRT -- The Shinri Music Replacement Tool
 I know this code is terrible, I don't expect anyone but me to work on it -ermez
 """
 # Imports
+import static_ffmpeg
+static_ffmpeg.add_paths(weak=True)
 import vdf # pyright: ignore[reportMissingTypeStubs]
 import sys
 import shutil
@@ -12,6 +14,8 @@ import tkinter as tk
 from tkinter import filedialog
 from pathlib import Path
 from typing import Any,cast
+from pydub import AudioSegment  # pyright: ignore[reportMissingTypeStubs]
+from math import ceil
 # Default config
 template_config: dict[Any,Any] = {
     "version":0.3,
@@ -20,6 +24,27 @@ template_config: dict[Any,Any] = {
     "extraction":False,
     "active_overrides" : {} # format will be "active_overrides" : {"something(replacing)":"another thing(the replacement)"}
 }
+# Self explanatory
+def getAudioLenSecs(audio_path: Path) -> float:
+    audio = AudioSegment.from_file(audio_path)
+    duration = len(audio) / 1000.0
+    return duration
+
+
+def extendAudio(replacing_path: Path, override_path, export_folder: Path) -> Path:
+    replacing_audio = AudioSegment.from_file(replacing_path)
+    override_audio = AudioSegment.from_file(override_path)
+    loop_count = ceil(len(replacing_audio) / len(override_audio))
+    audio_path = override_path
+    final_path = export_folder / (str(audio_path.stem) + "_len" + str(int(len(replacing_audio)/1000.0)) + str(audio_path.suffix))
+    if final_path.is_file():
+        return final_path
+    audio = AudioSegment.from_file(audio_path)
+    looped_audio: AudioSegment = audio * loop_count
+    final_audio: AudioSegment = looped_audio[:len(replacing_audio)] # pyright: ignore[reportAssignmentType]
+    export_folder.mkdir(parents=True, exist_ok=True)
+    final_audio.export(final_path,format=(audio_path.suffix.lstrip(".").lower()))
+    return final_path
 
 # Saves the JSON provided as config to config_path
 def saveConfig(config:dict[Any,Any],config_path:Path) -> None:
@@ -353,13 +378,15 @@ if __name__ == "__main__":
                 if not override:
                     continue
                 # the copy operation now
+                if getAudioLenSecs(replacing) > getAudioLenSecs(override):
+                    print("SMRT detected that the new audio is shorter than the original one. Would you like an automatic looped extension instead? (y/N)")
+                    extend = input("Choice: ")
+                    if extend.lower().strip() == "y":
+                        override = extendAudio(replacing,override,(scr_root) / "audio_cache")
                 addOverride(replacing,override,gmod_path,config,config_path,audio_path)
             case "2":
                 clearTerminal()
                 overrides_list = listOverrides(config)
-
-
-                
                 choicer = input("ID to remove, q to go back>>")
                 if choicer.strip().lower() == "q":
                     continue                

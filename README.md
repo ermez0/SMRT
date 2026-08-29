@@ -24,8 +24,12 @@ Option 3 will reset the config to a basic one and also remove the SMRT addon fro
 - There might be some places without input validation which may cause the program to crash.
 
 ## FAQ(Not really I'm just answering questions I thought *might* get asked)
-- Why is this not a workshop addon?
+- **Why is this not a workshop addon?**
+
   Because this tool allows customizability that you just can't get from one addon. Also I don't know how steam works well enough to make an addon
+- **Why does the looping feature exist?**,
+
+  Because of a bug I am facing where the music will cut out in game for a bit before restoring itself. I don't know what causes it and I am just trying to work out a fix. You shouldn't use it unless you need it.
 
 ## Credits
 - The Shinri Trial developers for making this possible
