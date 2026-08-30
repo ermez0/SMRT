@@ -24,6 +24,7 @@ template_config: dict[Any,Any] = {
     "extraction":False,
     "active_overrides" : {} # format will be "active_overrides" : {"something(replacing)":"another thing(the replacement)"}
 }
+VERSION = 0.4
 # Self explanatory
 def getAudioLenSecs(audio_path: Path) -> float:
     audio = AudioSegment.from_file(audio_path)
@@ -89,7 +90,7 @@ def clearTerminal() -> None:
     else:
         clear = "clear"
     subprocess.run(clear,shell=True) # shell = True because cls is not a program
-    print("SMRT -- The Shinri Music Replacement Tool\n" + "-"*41)
+    print("SMRT -- The Shinri Music Replacement Tool v" + str(VERSION) + "\n" + "-"*46)
 
 def folderPicker(windowTitle: str) -> Path | None:
     root = tk.Tk()
@@ -257,12 +258,24 @@ def addOverride(replacing:Path,override:Path, gmod_path:Path,config:dict[Any,Any
     config["active_overrides"][str(relative_path)] = str(override)
     saveConfig(config,config_path)
 
-def listOverrides(config:dict[Any,Any]) -> list[str]:
+def listOverrides(config:dict[Any,Any], noPrint:bool = False) -> list[str]:
     overrides_list: list[str] = []
     for i,replacing in enumerate(config["active_overrides"]):
-        print("ID: " + str(i) + " | " + str(replacing) + " is being overridden by "+ config["active_overrides"][str(replacing)])
+        if not noPrint:
+            print("ID: " + str(i) + " | " + str(replacing) + " is being overridden by "+ config["active_overrides"][str(replacing)])
         overrides_list.append(str(replacing))
     return overrides_list
+
+def listOverrides2(active_overrides:dict[Any,Any], noPrint:bool = False) -> list[str]:
+    overrides_list: list[str] = []
+    for i,replacing in enumerate(active_overrides):
+        if not noPrint:
+            print("ID: " + str(i) + " | " + str(replacing) + " is being overridden by "+ active_overrides[str(replacing)])
+        overrides_list.append(str(replacing))
+    return overrides_list
+
+
+
 if __name__ == "__main__":
     clearTerminal() # you will see me write this a lot, to clear the terminal
     if sys.platform.startswith("win32"):
@@ -347,6 +360,8 @@ if __name__ == "__main__":
         "1) Add override\n" \
         "2) Manage existing overrides\n" \
         "3) Nuke SMRT\n" \
+        "4) Export soundpack\n" \
+        "5) Import soundpack\n" \
         "Q) Exit Program")
         option = input("Choice>> ")
         match option:
@@ -402,7 +417,7 @@ if __name__ == "__main__":
                 clearTerminal()
                 smrt_addon_folder = gmod_path / "garrysmod" / "addons" / "smrt"
                 print("NOTE: THIS WILL WIPE \"" + str(smrt_addon_folder) + "\" and \"" + str(audio_path) +"\".\n"
-                "If any of those directories should not be wiped, do NOT authorize the deletion! ")
+                "If any of those directories should not be wiped, do NOT proceed with the deletion! ")
                 print("Are you sure you want to proceed and nuke SMRT? If so, type \"YES\".")
                 confirm = input("Input>>")
                 if confirm == "YES":
@@ -413,6 +428,75 @@ if __name__ == "__main__":
                     
                     saveConfig(template_config,config_path)
                     break
+            case "4":
+                clearTerminal()
+                warnFlag = False
+                soundpack_dict: dict = {}
+                print("The currently loaded config will be exported as a soundpack file.\n" \
+                "Would you like to list the config? (Y/n)")
+                choice = input("Choice: ")
+                if choice.lower().strip() != "n":
+                    listOverrides(config)
+                for replacing_str,override_str in config["active_overrides"].items():
+                    replacing = Path(replacing_str)
+                    override = Path(override_str).resolve()
+                    is_relative = override.is_relative_to(audio_path)
+                    soundpack_dict[replacing.as_posix()] = {}
+                    soundpack_dict[replacing.as_posix()]["relative"] = is_relative
+                    if is_relative:
+                        soundpack_dict[replacing.as_posix()]["path"] = (override.relative_to(audio_path)).as_posix()
+                    else:
+                        warnFlag = True
+                        soundpack_dict[replacing.as_posix()]["path"] = override.as_posix()
+                if warnFlag:
+                    print("This soundpack has overrides outside of st_sound and as such will *not* be compatible on another system.")
+                soundpacks_dir = scr_root / "soundpacks"
+                soundpacks_dir.mkdir(exist_ok=True)
+                count = 0
+                already_exists = set()
+                # The set idea came from AI, i would have never thought of it.
+                for file in sorted(soundpacks_dir.iterdir()):
+                    if file.is_file() and file.name.startswith("soundpack"):
+                        if (file.stem.removeprefix("soundpack")).isdigit():
+                            already_exists.add(int(file.stem.removeprefix("soundpack")))
+                while count in already_exists:
+                    count += 1
+                path_to_save = soundpacks_dir / ("soundpack" + str(count) + ".smrt")
+                with open(path_to_save,"w",encoding="utf-8") as f:
+                    json.dump(soundpack_dict,f,indent=4)
+                print("Exported to: "+str(path_to_save))
+                input("Enter to continue...")
+            case "5":
+                warnFlag = False
+                clearTerminal()
+                print("The current config will be ERASED and replaced with a soundpack. Are you sure you want to proceed?(y/N)")
+                proceed = input("Choice: ")
+                if proceed.lower().strip() != "y":
+                    continue
+                soundpack_path = filePicker("Select your soundpack",[("SMRT Soundpack file","*.smrt"),("All Files","*.*")],(scr_root / "soundpacks"))
+                if soundpack_path is None:
+                    print("No soundpack selected! Enter to continue...")
+                    input()
+                    continue
+                with open(soundpack_path,"r",encoding="utf-8") as soundpack_file:
+                    soundpack = json.load(soundpack_file)
+                    new_overrides = {}
+                    for replacing,properties in soundpack.items():
+                        if properties["relative"]:
+                            override_path = audio_path / properties["path"]
+                        else:
+                            warnFlag = True
+                            override_path = properties["path"]
+                        new_overrides[str(replacing)] = str(override_path)
+                    listOverrides2(new_overrides)
+                    if warnFlag:
+                        print("This pack has non-relative paths so it may not work if you got it from someone else or moved your SMRT directory. Proceed with caution!")
+                    print("Are you sure you want to override your config with this soundpack?(y/N)")
+                    proceed = input("Choice: ")
+                    if proceed.lower().strip() != "y":
+                        continue
+                    config["active_overrides"] = new_overrides
+                    saveConfig(config,config_path)
             case _:
                 continue
     
