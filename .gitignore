@@ -222,3 +222,6 @@ config.json.*
 config.json
 st_sound/
 audio_cache/
+soundpack*.smrt
+test*
+soundpacks/
