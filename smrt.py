@@ -24,7 +24,7 @@ template_config: dict[Any,Any] = {
     "extraction":False,
     "active_overrides" : {} # format will be "active_overrides" : {"something(replacing)":"another thing(the replacement)"}
 }
-VERSION = 0.4
+VERSION = 0.5
 # Self explanatory
 def getAudioLenSecs(audio_path: Path) -> float:
     audio = AudioSegment.from_file(audio_path)
