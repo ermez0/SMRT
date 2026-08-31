@@ -1,0 +1,33 @@
+from typing import Any,cast
+from pathlib import Path
+import json
+import utils
+
+template_config: dict[Any,Any] = {
+    "version":0.5,
+    "path_to_gmod": None,
+    "path_to_workshop":None,
+    "extraction":False,
+    "active_overrides" : {} # format will be "active_overrides" : {"something(replacing)":"another thing(the replacement)"}
+}
+
+def save_config(config_dict:dict[Any,Any],config_path:Path) -> None:
+    with open(config_path,"w",encoding="utf-8") as fconfig:
+        json.dump(config_dict,fconfig,indent=4)
+
+def process_config(config_path: Path) -> dict[Any,Any]:
+    if not config_path.is_file():
+        with open(config_path,"w",encoding="utf-8") as fconfig:
+            json.dump(template_config, fconfig, indent=4)
+    # Load the config
+    with open(config_path,"r",encoding="utf-8") as fconfig:
+        config = json.load(fconfig)
+    # if config version is wrong, warn and fill in empty values
+    if config.get("version",0) != template_config["version"]:
+        utils.clear_terminal()
+        print("Config file out of date! Config may be unfunctional. It is recommended you nuke SMRT and set-up your overrides from scratch. Proceeding with your existing config is unsupported.\n" \
+        "SMRT will try to merge your config with a default config however this may not be reliable. Use at your own risk!")
+        for k,v in template_config.items():
+            config.setdefault(k,v)
+        input("Enter to proceed...")
+    return config
