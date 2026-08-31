@@ -3,6 +3,8 @@ from pathlib import Path
 import json
 import config
 import overridelib
+import zipfile
+import shutil
 
 def option_import_soundpack(config_dict: dict, config_path: Path, scr_root: Path, audio_path: Path,gmod_path: Path):       
     warnFlag = False
@@ -33,6 +35,21 @@ def option_import_soundpack(config_dict: dict, config_path: Path, scr_root: Path
         config.save_config(config_dict,config_path)
         overridelib.load_overrides_from_config(config_dict,gmod_path,config_path,audio_path)
 
+def get_path_to_save(extension: str) -> Path:
+    soundpacks_dir = utils.get_scr_root() / "soundpacks"
+    soundpacks_dir.mkdir(exist_ok=True)
+    count = 0
+    already_exists = set()
+    # The set idea came from AI, i would have never thought of it.
+    for file in sorted(soundpacks_dir.iterdir()):
+        if file.is_file() and file.name.startswith("soundpack"):
+            if (file.stem.removeprefix("soundpack")).isdigit():
+                already_exists.add(int(file.stem.removeprefix("soundpack")))
+    while count in already_exists:
+        count += 1
+    path_to_save = soundpacks_dir / ("soundpack" + str(count) + extension)
+    return path_to_save
+
 def option_export_soundpack(config_dict: dict, audio_path: Path, scr_root: Path):
     utils.clear_terminal()
     warnFlag = False
@@ -55,19 +72,19 @@ def option_export_soundpack(config_dict: dict, audio_path: Path, scr_root: Path)
             soundpack_dict[replacing.as_posix()]["path"] = override.as_posix()
     if warnFlag:
         print("This soundpack has overrides outside of st_sound and as such will *not* be compatible on another system.")
-    soundpacks_dir = scr_root / "soundpacks"
-    soundpacks_dir.mkdir(exist_ok=True)
-    count = 0
-    already_exists = set()
-    # The set idea came from AI, i would have never thought of it.
-    for file in sorted(soundpacks_dir.iterdir()):
-        if file.is_file() and file.name.startswith("soundpack"):
-            if (file.stem.removeprefix("soundpack")).isdigit():
-                already_exists.add(int(file.stem.removeprefix("soundpack")))
-    while count in already_exists:
-        count += 1
-    path_to_save = soundpacks_dir / ("soundpack" + str(count) + ".smrt")
+    path_to_save = get_path_to_save(".smrt")
     with open(path_to_save,"w",encoding="utf-8") as f:
         json.dump(soundpack_dict,f,indent=4)
     print("Exported to: "+str(path_to_save))
     input("Enter to continue...")
+
+def export_soundpackx(config_dict: dict,gmod_path: Path):
+    if not utils.config_sanity_chceck(config_dict,gmod_path):
+        print("Soundpack export failed because of config sanity check!")
+        input("Enter to proceed...")
+        return
+    path_to_save = get_path_to_save(".smrtx")
+    actual_path = Path(shutil.make_archive(str(path_to_save),"zip",str(gmod_path / "garrysmod" / "addons" / "smrt")))
+    actual_path.rename(path_to_save)
+
+    
