@@ -4,6 +4,8 @@ import state
 from pathlib import Path
 import tkinter as tk
 from tkinter import filedialog
+from typing import Any
+import shutil
 def clear_terminal() -> None:
     if sys.platform == "win32":
         clear = "cls"
@@ -53,3 +55,26 @@ def get_platform():
             sys.exit("OS not recognized.")
     return platform
 
+def list_overrides_dict(active_overrides:dict[Any,Any], noPrint:bool = False) -> list[str]:
+    overrides_list: list[str] = []
+    for i,replacing in enumerate(active_overrides):
+        if not noPrint:
+            print("ID: " + str(i) + " | " + str(replacing) + " is being overridden by "+ active_overrides[str(replacing)])
+        overrides_list.append(str(replacing))
+    return overrides_list
+
+def nuke_smrt(gmod_path:Path, audio_path: Path, config_path: Path):
+    clear_terminal()
+    smrt_addon_folder = gmod_path / "garrysmod" / "addons" / "smrt"
+    audio_cache_folder = get_scr_root() / "audio_cache"
+    print("NOTE: THIS WILL WIPE \"" + str(smrt_addon_folder) + "\", \"" + str(audio_path) +"\" and \""+ str(audio_cache_folder) + "\".\n"
+    "If any of those directories should not be wiped, do NOT proceed with the deletion! ")
+    print("Are you sure you want to proceed and nuke SMRT? If so, type \"YES\".")
+    confirm = input("Choice: ")
+    if confirm == "YES":
+        if smrt_addon_folder.is_dir():
+            shutil.rmtree(smrt_addon_folder)
+        if audio_path.is_dir():
+            shutil.rmtree(audio_path)
+        if audio_cache_folder.is_dir():
+            shutil.rmtree(audio_cache_folder)

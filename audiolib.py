@@ -1,6 +1,8 @@
 from pathlib import Path
 from pydub import AudioSegment
 from math import ceil
+import static_ffmpeg
+static_ffmpeg.add_paths(weak=True)
 def get_audio_len_secs(audio_path: Path) -> float:
     audio = AudioSegment.from_file(audio_path)
     duration = len(audio) / 1000.0
