@@ -63,7 +63,7 @@ def list_overrides_dict(active_overrides:dict[Any,Any], noPrint:bool = False) ->
         overrides_list.append(str(replacing))
     return overrides_list
 
-def nuke_smrt(gmod_path:Path, audio_path: Path, config_path: Path):
+def nuke_smrt(gmod_path:Path, audio_path: Path, config_path: Path) -> bool:
     clear_terminal()
     smrt_addon_folder = gmod_path / "garrysmod" / "addons" / "smrt"
     audio_cache_folder = get_scr_root() / "audio_cache"
@@ -78,3 +78,15 @@ def nuke_smrt(gmod_path:Path, audio_path: Path, config_path: Path):
             shutil.rmtree(audio_path)
         if audio_cache_folder.is_dir():
             shutil.rmtree(audio_cache_folder)
+        return True
+    return False
+
+def config_sanity_chceck(config_dict: dict, gmod_path: Path) -> bool:
+    real_count = 0
+    for file in (gmod_path / "garrysmod" / "addons" / "smrt").rglob("*.mp3"):
+        if file.is_file():
+            real_count += 1
+    config_count = len(config_dict["active_overrides"])
+    if real_count != config_count:
+        return False
+    return True

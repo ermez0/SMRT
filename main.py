@@ -13,9 +13,9 @@ import soundpacks
 import overridelib
 
 def option_nuke_smrt(gmod_path:Path, audio_path: Path, config_path: Path):
-    utils.nuke_smrt(gmod_path,audio_path,config_path)
-    config.save_config(config.template_config,config_path)
-    sys.exit(0)
+    if utils.nuke_smrt(gmod_path,audio_path,config_path):
+        config.save_config(config.template_config,config_path)
+        sys.exit(0)
 if __name__ == "__main__":
     utils.clear_terminal() # you will see me write this a lot, to clear the terminal
     state.platform = utils.get_platform()
@@ -47,6 +47,7 @@ if __name__ == "__main__":
         print("File extraction complete.")
     # The actual music replacement part
     workshop_path = config_dict["path_to_workshop"]
+    config_dict = config.process_config(config_path,gmod_path)
     while True:
         utils.clear_terminal()
         print("Below, GMod root should be set. Steam Root and Workshop Root may not be set depending on if they were needed during launch.\n"
@@ -70,6 +71,6 @@ if __name__ == "__main__":
             case "4": soundpacks.option_export_soundpack(config_dict,audio_path,scr_root)
             case "5": soundpacks.option_import_soundpack(config_dict,config_path,scr_root,audio_path,gmod_path)
             case _: continue
-        config_dict = config.process_config(config_path)
+        config_dict = config.process_config(config_path,gmod_path)
     
 

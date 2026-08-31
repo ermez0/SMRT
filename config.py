@@ -2,7 +2,7 @@ from typing import Any,cast
 from pathlib import Path
 import json
 import utils
-
+import sys
 template_config: dict[Any,Any] = {
     "version":0.5,
     "path_to_gmod": None,
@@ -15,19 +15,28 @@ def save_config(config_dict:dict[Any,Any],config_path:Path) -> None:
     with open(config_path,"w",encoding="utf-8") as fconfig:
         json.dump(config_dict,fconfig,indent=4)
 
-def process_config(config_path: Path) -> dict[Any,Any]:
+def process_config(config_path: Path,gmod_path: Path | None = None) -> dict[Any,Any]:
     if not config_path.is_file():
         with open(config_path,"w",encoding="utf-8") as fconfig:
             json.dump(template_config, fconfig, indent=4)
     # Load the config
     with open(config_path,"r",encoding="utf-8") as fconfig:
-        config = json.load(fconfig)
+        config_dict = json.load(fconfig)
     # if config version is wrong, warn and fill in empty values
-    if config.get("version",0) != template_config["version"]:
+    if config_dict.get("version",0) != template_config["version"]:
         utils.clear_terminal()
         print("Config file out of date! Config may be unfunctional. It is recommended you nuke SMRT and set-up your overrides from scratch. Proceeding with your existing config is unsupported.\n" \
         "SMRT will try to merge your config with a default config however this may not be reliable. Use at your own risk!")
         for k,v in template_config.items():
-            config.setdefault(k,v)
+            config_dict.setdefault(k,v)
         input("Enter to proceed...")
-    return config
+    if gmod_path is not None:
+        if not utils.config_sanity_chceck(config_dict,gmod_path):
+            print("Config sanity check failed! Config file unreliable! Type BYPASS if you want to bypass this check. Otherwise, SMRT will be reset and all your overrides will be lost!")
+            choice = input("Choice: ").lower().strip()
+            if choice != "bypass":
+                if utils.nuke_smrt(gmod_path,(utils.get_scr_root() / "st_sound"),config_path):
+                    save_config(template_config,config_path)
+                    sys.exit(0)
+            
+    return config_dict
