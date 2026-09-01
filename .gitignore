@@ -224,4 +224,5 @@ st_sound/
 audio_cache/
 soundpack*.smrt
 test*
-soundpacks/
+soundpacks*
+audio_cache*
