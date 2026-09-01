@@ -61,15 +61,15 @@ def detect_gmod(steam_root: Path) -> Path | None:
                         break
     return gmod_path if gmod_path.is_dir() else None
     
-def detect_steam_root(platform: str) -> Path | None:
-    if platform == "win32":
+def detect_steam_root() -> Path | None:
+    if state.platform == "win32":
         import winreg
         try:    
-            steam_install_key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Valve\Steam")
-            steam_root_s, _ = winreg.QueryValueEx(steam_install_key, "SteamPath")
-            steam_root = Path(steam_root_s)
-            if (steam_root / "steamapps").is_dir():
-                return steam_root
+            with winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Valve\Steam") as steam_install_key:
+                steam_root_s, _ = winreg.QueryValueEx(steam_install_key, "SteamPath")
+                steam_root = Path(steam_root_s)
+                if (steam_root / "steamapps").is_dir():
+                    return steam_root
         except Exception:
             pass
         try:
@@ -82,10 +82,10 @@ def detect_steam_root(platform: str) -> Path | None:
             pass
         steam_root = Path(r"C:\Program Files (x86)\Steam")
         return steam_root if (steam_root / "steamapps").is_dir() else None
-    elif platform == "macos":
+    elif state.platform == "macos":
         steam_root = Path.home() / "Library" /"Application Support" /"Steam"
         return steam_root if (steam_root/"steamapps").is_dir() else None
-    elif platform == "linux":
+    elif state.platform == "linux":
         # i dont use linux so i will pull a bunch of random directories from the internet and hope one sticks
         possible_steams = [Path.home() / ".local" / "share" / "Steam",
                             Path.home() /".var"/"app"/"com.valvesoftware.Steam"/".local"/"share"/"Steam",
@@ -109,7 +109,7 @@ def detect_workshop(gmod_path: Path) -> Path | None:
         return None
     return workshop_path
 
-def extract_addons(workshop_path:Path,gmod_path:Path,config_dict:dict[Any,Any],audio_path:Path,config_path:Path) -> None:
+def extract_addons(workshop_path:Path,gmod_path:Path) -> None:
     workshop_gmod_content_path = workshop_path / "content" / "4000"
     addons_to_extract = ["3600114514","2560009684","2560012664","3600116031"] # These are the IDs of BGM Base, 1, 2 and 3 by Mikvoin on the steam workshop
     # get gmad
@@ -118,7 +118,10 @@ def extract_addons(workshop_path:Path,gmod_path:Path,config_dict:dict[Any,Any],a
         print("GMad not found! Exiting...")
         input("Enter to exit...")
         sys.exit(1)
-        
+    assert gmad_path is not None
+    assert state.audio_path is not None
+    assert state.platform is not None and state.scr_root is not None and state.config_path is not None
+    assert state.config_dict is not None
     # For every addon in the addons to extract
     for addon_id in addons_to_extract:
         addon_folder_path = workshop_gmod_content_path / addon_id
@@ -130,18 +133,18 @@ def extract_addons(workshop_path:Path,gmod_path:Path,config_dict:dict[Any,Any],a
             continue
         # Extract
         for addon_file_path in gma_files:
-            result = extract_gma(gmad_path,addon_file_path,audio_path)
+            result = extract_gma(gmad_path,addon_file_path,state.audio_path)
             if not result: # If the extraction fails, st_sound probably makes no sense at that point so I recomment just wiping it. I am being paranoid and asking for the user's consent before rm -r ing a directory
                 print("Because extraction failed, it is *heavily* recommeneded you remove the st_sound directory.")
-                print(str(audio_path) + " will be removed PERMANENTLY. If this path is valid, input \"YES\". If the path is invalid, type \"NO\" or close out of the program.\n"
+                print(str(state.audio_path) + " will be removed PERMANENTLY. If this path is valid, input \"YES\". If the path is invalid, type \"NO\" or close out of the program.\n"
                 "If you do not authorize the deletion, please delete the directory yourself.\n"
                 "Leaving a faulty st_sound directory MIGHT prevent SMRT from properly functioning.")
                 confirm = input("Confirm>> ")
                 if confirm == "YES":
-                    shutil.rmtree(audio_path,ignore_errors=True)
+                    shutil.rmtree(state.audio_path,ignore_errors=True)
                 sys.exit("GMAD Failure")
-    config_dict["extraction"] = True # mark the extraction as complete
-    config.save_config(config_dict,config_path)
+    state.config_dict["extraction"] = True # mark the extraction as complete
+    config.save_config(state.config_dict)
 
 def find_gmad(gmod_path: Path) -> Path | None:
     gmad_paths = [gmod_path / "bin" / "gmad",
@@ -161,7 +164,7 @@ def setup_gmod_path() -> tuple[Path,Path | None]:
     assert state.platform is not None
     print("SMRT will attempt to auto-configure the GMOD path. If this is incorrect, you will be allowed to choose a custom path.")
     gmod_path = None
-    steam_root = detect_steam_root(state.platform)
+    steam_root = detect_steam_root()
     choice = ""
     if not steam_root:
         print("Failure to locate Steam! Reverting to manual folder select.")

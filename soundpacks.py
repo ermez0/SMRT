@@ -5,11 +5,15 @@ import config
 import overridelib
 import zipfile
 import shutil
+import state
 
-def option_import_soundpack(config_dict: dict, config_path: Path, scr_root: Path, audio_path: Path,gmod_path: Path):       
+def option_import_soundpack(gmod_path: Path):       
+    assert state.audio_path is not None
+    assert state.platform is not None and state.scr_root is not None and state.config_path is not None
+    assert state.config_dict is not None
     warnFlag = False
     utils.clear_terminal()
-    soundpack_path = utils.file_picker("Select your soundpack",[("SMRT Soundpack file","*.smrt"),("All Files","*.*")],(scr_root / "soundpacks"))
+    soundpack_path = utils.file_picker("Select your soundpack",[("SMRT Soundpack file","*.smrt"),("All Files","*.*")],(state.scr_root / "soundpacks"))
     if soundpack_path is None:
         print("No soundpack selected! Enter to continue...")
         input()
@@ -19,7 +23,7 @@ def option_import_soundpack(config_dict: dict, config_path: Path, scr_root: Path
         new_overrides = {}
         for replacing,properties in soundpack.items():
             if properties["relative"]:
-                override_path = audio_path / properties["path"]
+                override_path = state.audio_path / properties["path"]
             else:
                 warnFlag = True
                 override_path = properties["path"]
@@ -31,9 +35,9 @@ def option_import_soundpack(config_dict: dict, config_path: Path, scr_root: Path
         proceed = input("Choice: ")
         if proceed.lower().strip() != "y":
             return
-        config_dict["active_overrides"] = new_overrides
-        config.save_config(config_dict,config_path)
-        overridelib.load_overrides_from_config(config_dict,gmod_path,config_path,audio_path)
+        state.config_dict["active_overrides"] = new_overrides
+        config.save_config(state.config_dict)
+        overridelib.load_overrides_from_config(gmod_path)
 
 def get_path_to_save(extension: str) -> Path:
     soundpacks_dir = utils.get_scr_root() / "soundpacks"
@@ -50,7 +54,10 @@ def get_path_to_save(extension: str) -> Path:
     path_to_save = soundpacks_dir / ("soundpack" + str(count) + extension)
     return path_to_save
 
-def option_export_soundpack(config_dict: dict, audio_path: Path, scr_root: Path):
+def option_export_soundpack(config_dict: dict):
+    assert state.audio_path is not None
+    assert state.platform is not None and state.scr_root is not None and state.config_path is not None
+    assert state.config_dict is not None
     utils.clear_terminal()
     warnFlag = False
     soundpack_dict: dict = {}
@@ -62,11 +69,11 @@ def option_export_soundpack(config_dict: dict, audio_path: Path, scr_root: Path)
     for replacing_str,override_str in config_dict["active_overrides"].items():
         replacing = Path(replacing_str)
         override = Path(override_str).resolve()
-        is_relative = override.is_relative_to(audio_path.resolve())
+        is_relative = override.is_relative_to(state.audio_path.resolve())
         soundpack_dict[replacing.as_posix()] = {}
         soundpack_dict[replacing.as_posix()]["relative"] = is_relative
         if is_relative:
-            soundpack_dict[replacing.as_posix()]["path"] = (override.relative_to(audio_path)).as_posix()
+            soundpack_dict[replacing.as_posix()]["path"] = (override.relative_to(state.audio_path)).as_posix()
         else:
             warnFlag = True
             soundpack_dict[replacing.as_posix()]["path"] = override.as_posix()

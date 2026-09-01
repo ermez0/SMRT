@@ -3,6 +3,7 @@ from pathlib import Path
 import json
 import utils
 import sys
+import state
 template_config: dict[Any,Any] = {
     "version":0.5,
     "path_to_gmod": None,
@@ -11,17 +12,24 @@ template_config: dict[Any,Any] = {
     "active_overrides" : {} # format will be "active_overrides" : {"something(replacing)":"another thing(the replacement)"}
 }
 
-def save_config(config_dict:dict[Any,Any],config_path:Path) -> None:
-    with open(config_path,"w",encoding="utf-8") as fconfig:
+def save_config(config_dict:dict[Any,Any]) -> None:
+    assert state.config_path is not None
+    with open(state.config_path,"w",encoding="utf-8") as fconfig:
         json.dump(config_dict,fconfig,indent=4)
 
-def process_config(config_path: Path,gmod_path: Path | None = None) -> dict[Any,Any]:
-    if not config_path.is_file():
-        with open(config_path,"w",encoding="utf-8") as fconfig:
+def process_config(gmod_path: Path | None = None) -> dict[Any,Any]:
+    # We know this for a fact
+    assert state.platform is not None and state.scr_root is not None and state.config_path is not None
+    # Make the config if it doesnt exist
+    if not state.config_path.is_file():
+        with open(state.config_path,"w",encoding="utf-8") as fconfig:
             json.dump(template_config, fconfig, indent=4)
+    
     # Load the config
-    with open(config_path,"r",encoding="utf-8") as fconfig:
+    with open(state.config_path,"r",encoding="utf-8") as fconfig:
         config_dict = json.load(fconfig)
+
+    
     # if config version is wrong, warn and fill in empty values
     if config_dict.get("version",0) != template_config["version"]:
         utils.clear_terminal()
@@ -30,13 +38,15 @@ def process_config(config_path: Path,gmod_path: Path | None = None) -> dict[Any,
         for k,v in template_config.items():
             config_dict.setdefault(k,v)
         input("Enter to proceed...")
+
+    
     if gmod_path is not None:
         if not utils.config_sanity_chceck(config_dict,gmod_path):
             print("Config sanity check failed! Config file unreliable! Type BYPASS if you want to bypass this check. Otherwise, SMRT will be reset and all your overrides will be lost!")
             choice = input("Choice: ").lower().strip()
             if choice != "bypass":
-                if utils.nuke_smrt(gmod_path,(utils.get_scr_root() / "st_sound"),config_path):
-                    save_config(template_config,config_path)
+                if utils.nuke_smrt(gmod_path):
+                    save_config(template_config)
                     sys.exit(0)
             
     return config_dict
