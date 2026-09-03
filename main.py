@@ -73,7 +73,7 @@ if __name__ == "__main__":
             case "1": overridelib.option_add_override(gmod_path)
             case "2": overridelib.option_manage_overrides(gmod_path)
             case "3": option_nuke_smrt(gmod_path)
-            case "4": soundpacks.option_export_soundpack()
+            case "4": soundpacks.option_export_soundpack(gmod_path)
             case "5": soundpacks.option_import_soundpack(gmod_path)
             case _: continue
         config_dict = config.process_config(gmod_path)
