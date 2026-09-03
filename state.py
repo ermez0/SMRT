@@ -1,6 +1,6 @@
 from pathlib import Path
 from typing import Any
-VERSION = 0.5
+VERSION = 1.0
 platform: str | None = None
 scr_root: Path | None = None
 config_path: Path | None = None
