@@ -41,7 +41,7 @@ def process_config(gmod_path: Path | None = None) -> dict[Any,Any]:
 
     
     if gmod_path is not None:
-        if not utils.config_sanity_chceck(config_dict,gmod_path):
+        if not utils.config_sanity_check(config_dict,gmod_path):
             print("Config sanity check failed! Config file unreliable! Type BYPASS if you want to bypass this check. Otherwise, SMRT will be reset and all your overrides will be lost!")
             choice = input("Choice: ").lower().strip()
             if choice != "bypass":

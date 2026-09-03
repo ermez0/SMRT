@@ -99,7 +99,7 @@ def nuke_smrt(gmod_path:Path) -> bool:
             return True
         return False
 
-def config_sanity_chceck(config_dict: dict, gmod_path: Path) -> bool:
+def config_sanity_check(config_dict: dict, gmod_path: Path) -> bool:
     real_count = 0
     for file in (gmod_path / "garrysmod" / "addons" / "smrt").rglob("*.mp3"):
         if file.is_file():
