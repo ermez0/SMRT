@@ -15,15 +15,19 @@ After the initial setup is complete, you will be presented with 5 options.
 1. **Add Override:** This option will allow you to pick a track to be replaced and a track to override the first track. It will then allow you to extend the track if it is too short.
 2. **Manage Existing Overrides:** This option will allow you to remove any overrides that currently exist.
 3. **Nuke SMRT:** This option will delete the ```st_sound```,```audio_cache``` and ```.../garrysmod/addons/smrt``` directories in addition to the config.json file being reset. Will essentially do a factory reset.
-4. **Export soundpack:** Will export the current config as a ```.smrt``` file, containing information on overrides.
-5. **Import soundpack:** Will import a ```.smrt``` file into the config, putting the override information in it into effect.
+4. **Export soundpack:** Will export the current config as a ```.smrt/.smrtx``` file, containing information on overrides.
+5. **Import soundpack:** Will import a ```.smrt/.smrtx``` file into the config, putting the override information in it into effect.
+
+## Soundpacks
+**Note: Just use the steam workshop for sharing soundpacks. These are just things implemented because I wanted to, they are much less functional than an actual steam addon. I make no guarantees on these soundpacks being any good.**
+### SMRT Soundpack Files
+These files are essentially just the ```active_overrides``` section of the config file, with files inside of st_sound reduced to a relative path form. They can essentially serve as a backup config. They are not very useful for sharing soundpacks with diffrent users as any extended track/outside track will not be present on the recieving user's system.
+### SMRTX Soundpack Archives
+These files are marginally better than SMRT Soundpack Files as they package the audio with them. This means that theoretically you could send a soundpack as a SMRTX file. These files are just ```.zip``` files that contain a ```sound/``` directory which can be put into an addon and a ```smrtx_info.smrt``` file which is a standard ```.smrt``` file containing information from the config. This means that if a user were to recieve a SMRTX Soundpack Archive from someone else, non-relative paths in the config would still be invalid however everything *should* still be functional as the sound files are also packaged seperately from the config files.
 
 ## Known Problems
 ### If you have any issues not listed here, please open an issue on the GitHub page.
-- **\*.smrt soundpack files have problems when using any non-relative paths**
-
-  This will be adressed with a new *.smrtx soundpack bundling the audio with it.
-
+*Nothing here right now.*
 ## FAQ(Not really I'm just answering questions I thought *might* get asked)
 - **Why is this not a workshop addon?**
 
