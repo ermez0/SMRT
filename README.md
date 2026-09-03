@@ -10,26 +10,31 @@ When starting up SMRT for the first time, it will generate a config file. Then i
 
 After that, SMRT will attempt to auto-detect the workshop folder. If it fails, it will prompt you for your "workshop path". This folder is specifically located in the "steamapps" folder 2 directories above the GMod folder in most cases. Note that it does **not** want the GMod workshop folder, just the general workshop folder. By default it is ```C:\Program Files (x86)\Steam\steamapps\workshop```.
 
-After getting the folder directories, SMRT will extract the GMA files. You will know that process is done when it shows you the SMRT menu.
+After the initial setup is complete, you will be presented with 5 options.
 
-Option 1 will allow you to pick 2 ```.mp3``` files. The first file you pick will be the one that plays in game that you want to get rid of and the second file will be the one that replaces it. While you can *technically* choose a file outside of the ones that come with Shinri Trial, doing so is **unsupported** as there has been no testing on if GMod plays nice with them. You can certainly try *at your own risk*.
+1. **Add Override:** This option will allow you to pick a track to be replaced and a track to override the first track. It will then allow you to extend the track if it is too short.
+2. **Manage Existing Overrides:** This option will allow you to remove any overrides that currently exist.
+3. **Nuke SMRT:** This option will delete the ```st_sound```,```audio_cache``` and ```.../garrysmod/addons/smrt``` directories in addition to the config.json file being reset. Will essentially do a factory reset.
+4. **Export soundpack:** Will export the current config as a ```.smrt/.smrtx``` file, containing information on overrides.
+5. **Import soundpack:** Will import a ```.smrt/.smrtx``` file into the config, putting the override information in it into effect.
 
-Option 2 will allow you to see all overrides that are currently listed in the ```config.json``` file. Note that this does **not** check what overrides are actually active, just which overrides are listed in the config. If your config becomes out of sync with the actual overrides, you may try option 3. When listing all these overrides, they will all get an ID. By inputting an ID number into SMRT, you can remove that override.
-
-Option 3 will reset the config to a basic one and also remove the SMRT addon from GMod, it will also remove st_sound. essentially doing a soft-uninstall of the program. You may want to do this when you are trying to remove SMRT from your device or your config file is invalid and you want a fresh start.
+## Soundpacks
+**Note: Just use the steam workshop for sharing soundpacks. These are just things implemented because I wanted to, they are much less functional than an actual steam addon. I make no guarantees on these soundpacks being any good.**
+### SMRT Soundpack Files
+These files are essentially just the ```active_overrides``` section of the config file, with files inside of st_sound reduced to a relative path form. They can essentially serve as a backup config. They are not very useful for sharing soundpacks with diffrent users as any extended track/outside track will not be present on the recieving user's system.
+### SMRTX Soundpack Archives
+These files are marginally better than SMRT Soundpack Files as they package the audio with them. This means that theoretically you could send a soundpack as a SMRTX file. These files are just ```.zip``` files that contain a ```sound/``` directory which can be put into an addon and a ```smrtx_info.smrt``` file which is a standard ```.smrt``` file containing information from the config. This means that if a user were to recieve a SMRTX Soundpack Archive from someone else, non-relative paths in the config would still be invalid however everything *should* still be functional as the sound files are also packaged seperately from the config files.
 
 ## Known Problems
 ### If you have any issues not listed here, please open an issue on the GitHub page.
-- It is known that the program will mess up if the user chooses a wrong directory for their Garry's Mod or Workshop directory. I am planning to introduce a way to check if the directory is correct before allowing the program to proceed
-- There might be some places without input validation which may cause the program to crash.
-
+*Nothing here right now.*
 ## FAQ(Not really I'm just answering questions I thought *might* get asked)
 - **Why is this not a workshop addon?**
 
   Because this tool allows customizability that you just can't get from one addon. Also I don't know how steam works well enough to make an addon
-- **Why does the looping feature exist?**,
+- **Why does the looping feature exist?**
 
-  Because of a bug I am facing where the music will cut out in game for a bit before restoring itself. I don't know what causes it and I am just trying to work out a fix. You shouldn't use it unless you need it.
+  Without it, the music will end but instead of starting the new track, the game will wait in silence until the length of the original track has passed. This feature will fill the gap.
 
 ## Credits
 - The Shinri Trial developers for making this possible
